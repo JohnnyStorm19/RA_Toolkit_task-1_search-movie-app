@@ -9,7 +9,7 @@ import { BrowserRouter } from 'react-router-dom'
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <Provider store={store}>
-      <BrowserRouter>
+      <BrowserRouter basename='/RA_Toolkit_task-1_search-movie-app'>
         <App />
       </BrowserRouter>
     </Provider>

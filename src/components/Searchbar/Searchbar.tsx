@@ -11,19 +11,33 @@ const Searchbar = () => {
   const [dropdown, setDropdown] = useState(false);
   const [page, setPage] = useState(1);
   const [dropdownTitles, setDropdownTitles] = useState<ISearchedMovie[]>([]);
+  const [prevPage, setPrevPage] = useState(0);
+  const [prevSearchValue, setPrevSearchValue] = useState("");
+  const [skipFetching, setSkipFetching] = useState(false);
 
   const navigate = useNavigate();
-  const debounced = useDebounce(searchValue);
+  const debounced = useDebounce(searchValue.trim());
 
   const { isError, isLoading, data } = useBasicSearchQuery(
     { debounced, page },
     {
-      skip: debounced.length < 2
+      skip: debounced.length < 2 || skipFetching
     }
   );
 
   useEffect(() => {
-    if (data && data.length > 0 && debounced.length > 1) {
+    if (prevSearchValue.length > searchValue.length) {
+      setDropdownTitles([]);
+      setPage(1);
+      setPrevPage(0);
+    }
+
+    if (skipFetching) {
+      setDropdownTitles([]);
+      setPage(1);
+      setPrevPage(0);
+    }
+    if (data && data.length > 0 && debounced.length > 1 && !skipFetching) {
       setDropdownTitles((prev) => [...prev, ...data]);
       setDropdown(debounced.length > 1 && data != undefined && data.length > 0);
     }
@@ -32,10 +46,25 @@ const Searchbar = () => {
       setDropdownTitles([]);
       setDropdown(false);
       setPage(1);
+      setPrevPage(0);
+      setPrevSearchValue("");
     }
-  }, [data, debounced, searchValue]);
+  }, [searchValue, skipFetching, prevSearchValue, data, debounced]);
+
+  useEffect(() => {
+    setSkipFetching(page === prevPage);
+
+  }, [page, prevPage]);
+
+  useEffect(() => {
+    setDropdownTitles([]);
+    setPage(1);
+    setPrevPage(0);
+  }, [searchValue]);
+
 
   const onChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
+    setPrevSearchValue(searchValue);
     setSearchValue(e.currentTarget.value);
   };
   const onMovieClick = (movieId: string) => {
@@ -48,6 +77,7 @@ const Searchbar = () => {
       container.clientHeight + Math.ceil(container.scrollTop) >=
       container.scrollHeight
     ) {
+      setPrevPage(page);
       setPage(page + 1);
     }
   };
